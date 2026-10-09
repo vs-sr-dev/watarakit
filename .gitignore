@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+build/
+_roms/
+*.exe
+*.o
+*.wav
+*.pgm
