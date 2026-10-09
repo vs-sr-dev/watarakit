@@ -63,11 +63,6 @@ python -m watarakit.recomp.all _roms --jobs 6               # every cart: trace,
   transfer, after RTI and WAI -- in both the interpreter and the native code,
   with the same cycle count. That is what makes the lockstep exact.
 
-Found on the way: SSSnake enables the NMI and selects bank 2 before it has
-cleared RAM; its first NMI calls $8548 in that bank -- $FF fill, which runs
-as `BBS7 $FF` no-ops -- until a BRK sends it through the IRQ handler. A
-real-hardware bug the game survives, so BRK is implemented in full.
-
 ## The machine, briefly
 
 | | Supervision | Game Boy (DMG) |
@@ -99,3 +94,34 @@ real-hardware bug the game survives, so BRK is implemented in full.
   Fight / Kung-Fu Street (Sachen); Hero Hawk / John Adventure. Pyramid and
   Tasac 2010 still carry fragments of their linker's symbol table
   (`draw_sprite`, `xor_sprite`, `hori_inverse`, `pausemusic`...).
+
+## Notes from the library
+
+- **SSSnake walks through empty ROM on every boot.** It enables the NMI and
+  selects bank 2 before it has finished clearing RAM; the first NMI calls
+  $8548 in that bank, which is $FF fill. `FF FF FF` decodes as `BBS7 $FF`,
+  a branch to the next instruction whatever bit 7 says, so the CPU slides
+  through the fill until a `BRK` at $9001 sends it through the IRQ handler,
+  and the game carries on. BRK is implemented in full for this one game.
+- **An indirect call built in zero page.** The Bon Treasure games (Cave
+  Wonders, Climber, Juggler, Kitchen War) write a `JMP abs` opcode ($4C) and
+  a target to $67-$69 and `JSR $0067`: the only code any game runs from RAM.
+- **Vectors into the window.** Penguin Hideout and Pyramid, both 32 KB
+  carts, point their NMI vector into $8000-$BFFF -- safe only because they
+  never select another bank.
+- **What the developers left in the padding.** Pyramid and Tasac 2010 carry
+  pieces of their linker's symbol table (`draw_sprite`, `xor_sprite`,
+  `hori_inverse`, `pausemusic`, `replaymusic`...): the sprite routines of a
+  console with no sprites. Balloon Fight carries its assembler's command
+  lines (`AS LIB\IO.ASM -OLIB\IO.OBJ`) and object names (`lib\screen.obj`,
+  `lib\sachen.obj`). Galaxy Fighter's free space holds a page of an x86
+  disassembly listing, IBM's "Personally Developed Software" strings
+  included -- a DOS PC's memory, written into the ROM image with the game.
+- **The same few people.** The credit screens of Cave Wonders, Delta Hero,
+  Earth Defender, Honey Bee and Jacky Lucky name the same small team again
+  and again (Zhang Li and Yong Ban on graphics, Hu Xuhui and Xiao Li Wei on
+  music). Their texts end in `$`, each game spelling its space as whatever
+  tile its font puts there (`PRESSaSTART$`).
+- **The catalogue.** Kabi Island is Bomberman; Super Kong, PacBoy & Mouse,
+  Super Pang, Block Buster and Hash Blocks need no explanation; Balloon
+  Fight did not even change the name.
